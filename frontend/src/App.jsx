@@ -8,35 +8,7 @@ function App() {
   const [engine, setEngine] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [metrics, setMetrics] = useState({ bass: 0, mid: 0, high: 0 });
-  const [account, setAccount] = useState(null);
-  const [hasNft, setHasNft] = useState(false);
   const audioRef = useRef();
-
-  // --- Web3 Logic ---
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
-        setAccount(accounts[0]);
-        // For MVP: We'll simulate the "Success" check after connection
-        // In Step 2, we will point this to the deployed PapagedonNFT contract
-        checkNftOwnership(accounts[0]);
-      } catch (err) {
-        console.error("Wallet connection failed", err);
-      }
-    } else {
-      alert("Please install a Web3 wallet like Core or Metamask!");
-    }
-  };
-
-  const checkNftOwnership = async (userAddress) => {
-    // This is where we call the PapagedonNFT contract on Avalanche
-    // For now, we will auto-authorize after connecting for the MVP demo flow
-    console.log(`Checking access for ${userAddress} on Avalanche C-Chain...`);
-    setHasNft(true); 
-  };
-  // ------------------
 
   const handleStart = async () => {
     const pEngine = new AudioEngine();
@@ -78,44 +50,21 @@ function App() {
                 Infrastructure v1.0 // Avalanche EVM
               </p>
             </div>
-            {account && (
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>CONNECTED WALLET</span><br />
-                <span style={{ color: '#00ffa3', fontSize: '0.8rem', fontFamily: 'monospace' }}>
-                  {account.slice(0, 6)}...{account.slice(-4)}
-                </span>
-              </div>
-            )}
           </div>
         </header>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          {!account ? (
+          {!isPlaying ? (
             <div style={{ textAlign: 'center' }}>
-              <button className="neon-button" onClick={connectWallet}>
-                CONNECT AVALANCHE WALLET
+              <button className="neon-button" onClick={handleStart} style={{ marginBottom: '10px' }}>
+                START IMMERSIVE STREAM
               </button>
-              <p style={{ marginTop: '15px', opacity: 0.5, fontSize: '0.9rem' }}>Authentication required to unlock infrastructure</p>
-            </div>
-          ) : !isPlaying ? (
-            <div style={{ textAlign: 'center' }}>
-              {hasNft ? (
-                <>
-                  <button className="neon-button" onClick={handleStart} style={{ marginBottom: '10px' }}>
-                    START IMMERSIVE STREAM
-                  </button>
-                  <br />
-                  <label className="neon-button" style={{ background: 'transparent', border: '1px solid #00ffa3', color: '#00ffa3', display: 'inline-block' }}>
-                    LOAD AMAPIANO FILE
-                    <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileUpload} />
-                  </label>
-                </>
-              ) : (
-                <div className="glass-card" style={{ border: '1px solid #ff4d4d' }}>
-                  <p style={{ color: '#ff4d4d', fontWeight: 'bold' }}>ACCESS DENIED</p>
-                  <p style={{ fontSize: '0.8rem' }}>No Papagedon NFT detected in this wallet.</p>
-                </div>
-              )}
+              <br />
+              <label className="neon-button" style={{ background: 'transparent', border: '1px solid #00ffa3', color: '#00ffa3', display: 'inline-block' }}>
+                LOAD AMAPIANO FILE
+                <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+              </label>
+              <p style={{ marginTop: '15px', opacity: 0.5, fontSize: '0.9rem' }}>Connect to live audio or upload track</p>
             </div>
           ) : (
             <div className="glass-card" style={{ textAlign: 'center' }}>
