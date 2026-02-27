@@ -4,17 +4,23 @@ import { OrbitControls, Stars, Float, Bloom, EffectComposer } from '@react-three
 import { AudioEngine } from './audio/core';
 import Visualizer from './components/Visualizer';
 
+import VideoVisualizer from './components/VideoVisualizer';
+
 const TEXTURES = [
-  { id: 1, name: 'NEON WAVE', url: '/textures/texture1.png' },
-  { id: 2, name: 'CYBER ORGANIC', url: '/textures/texture2.png' },
-  { id: 3, name: 'LIQUID GOLD', url: '/textures/texture3.png' }
+  { id: 1, name: 'NEON WAVE', url: '/textures/texture1.png', type: 'image' },
+  { id: 2, name: 'CYBER ORGANIC', url: '/textures/texture2.png', type: 'image' },
+  { id: 3, name: 'LIQUID GOLD', url: '/textures/texture3.png', type: 'image' },
+  { id: 4, name: 'URBAN VIBE', url: 'https://vjs.zencdn.net/v/oceans.mp4', type: 'video' },
+  { id: 5, name: 'ABSTRACT FLOW', url: 'https://www.w3schools.com/html/mov_bbb.mp4', type: 'video' }
 ];
 
 function App() {
   const [engine, setEngine] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [metrics, setMetrics] = useState({ bass: 0, mid: 0, high: 0 });
-  const [activeTexture, setActiveTexture] = useState(TEXTURES[0]);
+  const [metrics, setMetrics] = useState({ bass: 0, mid: 0, high: 0, beat: false });
+  const [activeAsset, setActiveAsset] = useState(TEXTURES[0]);
+  const [isAutoSwitch, setIsAutoSwitch] = useState(true);
+  const [lastBeatCount, setLastBeatCount] = useState(0);
   const audioRef = useRef();
 
   const handleStart = async () => {
@@ -26,22 +32,41 @@ function App() {
     setIsPlaying(true);
   };
 
+  const handleLiveFeed = async () => {
+    const pEngine = new AudioEngine();
+    await pEngine.initStream();
+    setEngine(pEngine);
+    setIsPlaying(true);
+  };
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       const url = URL.createObjectURL(file);
       audioRef.current.src = url;
-      handleStart();
+      setIsPlaying(false);
+      setTimeout(handleStart, 100);
     }
   };
 
   useEffect(() => {
     if (!engine || !isPlaying) return;
     const interval = setInterval(() => {
-      setMetrics(engine.getEnergy());
+      const energy = engine.getEnergy();
+      setMetrics(energy);
+      
+      // Auto-switch asset on beat
+      if (isAutoSwitch && energy.beat) {
+        setLastBeatCount(prev => prev + 1);
+        setActiveAsset(prev => {
+          const currentIndex = TEXTURES.findIndex(t => t.id === prev.id);
+          const nextIndex = (currentIndex + 1) % TEXTURES.length;
+          return TEXTURES[nextIndex];
+        });
+      }
     }, 30);
     return () => clearInterval(interval);
-  }, [engine, isPlaying]);
+  }, [engine, isPlaying, isAutoSwitch]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', color: 'white', overflow: 'hidden' }}>
@@ -57,26 +82,43 @@ function App() {
           </div>
           
           {isPlaying && (
-            <div className="stats-panel" style={{ margin: 0 }}>
-              {TEXTURES.map(t => (
-                <button 
-                  key={t.id}
-                  onClick={() => setActiveTexture(t)}
-                  className={`stat-item ${activeTexture.id === t.id ? 'active' : ''}`}
-                  style={{ 
-                    background: activeTexture.id === t.id ? 'rgba(0, 255, 163, 0.2)' : 'transparent',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    padding: '5px 15px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    color: activeTexture.id === t.id ? '#00ffa3' : 'white',
-                    fontSize: '0.6rem',
-                    fontWeight: 700
-                  }}
-                >
-                  {t.name}
-                </button>
-              ))}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button 
+                onClick={() => setIsAutoSwitch(!isAutoSwitch)}
+                style={{ 
+                  background: isAutoSwitch ? 'rgba(0, 255, 163, 0.2)' : 'transparent',
+                  border: '1px solid #00ffa3', 
+                  padding: '5px 15px', 
+                  borderRadius: '10px',
+                  fontSize: '0.6rem', 
+                  color: '#00ffa3',
+                  cursor: 'pointer',
+                  fontWeight: 900
+                }}
+              >
+                {isAutoSwitch ? 'AUTO-SYNC: ON' : 'AUTO-SYNC: OFF'}
+              </button>
+              <div className="stats-panel" style={{ margin: 0 }}>
+                {TEXTURES.map(t => (
+                  <button 
+                    key={t.id}
+                    onClick={() => setActiveAsset(t)}
+                    className={`stat-item ${activeAsset.id === t.id ? 'active' : ''}`}
+                    style={{ 
+                      background: activeAsset.id === t.id ? 'rgba(0, 255, 163, 0.2)' : 'transparent',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      padding: '5px 15px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      color: activeAsset.id === t.id ? '#00ffa3' : 'white',
+                      fontSize: '0.6rem',
+                      fontWeight: 700
+                    }}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </header>
@@ -85,7 +127,7 @@ function App() {
           {!isPlaying ? (
             <div className="glass-card" style={{ textAlign: 'center', padding: '50px' }}>
               <h2 style={{ letterSpacing: '2px', marginBottom: '30px' }}>SYSTEM READY</h2>
-              <button className="neon-button" onClick={handleStart} style={{ marginBottom: '15px', width: '100%' }}>
+              <button className="neon-button" onClick={handleLiveFeed} style={{ marginBottom: '15px', width: '100%' }}>
                 START LIVE STREAM
               </button>
               <br />
@@ -119,13 +161,26 @@ function App() {
                   </div>
                 ))}
               </div>
+
+              {metrics.beat && (
+                <div style={{ 
+                  marginTop: '15px', 
+                  textAlign: 'center', 
+                  color: '#00ffa3', 
+                  fontSize: '0.6rem', 
+                  fontWeight: 900,
+                  letterSpacing: '2px'
+                }}>
+                  BEAT DETECTED
+                </div>
+              )}
             </div>
           )}
         </div>
 
         <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div className="glass-card" style={{ padding: '10px 20px', fontSize: '0.6rem', opacity: 0.5, letterSpacing: '1px' }}>
-            ENGINE: GLSL_V2 | SHADER_DISPLACEMENT: ACTIVE | TEXTURE: {activeTexture.name}
+            ENGINE: GLSL_V2 | BEATS: {lastBeatCount} | ASSET: {activeAsset.name}
           </div>
           <div style={{ textAlign: 'right', fontSize: '0.7rem', opacity: 0.4, letterSpacing: '2px' }}>
              AVALANCHE C-CHAIN <br /> INFRA_CORE_RUNNING
@@ -141,7 +196,13 @@ function App() {
           <Stars radius={100} depth={50} count={10000} factor={4} saturation={0} fade speed={2} />
           
           <Float speed={3} rotationIntensity={1} floatIntensity={1}>
-            {engine && <Visualizer audioEngine={engine} textureUrl={activeTexture.url} />}
+            {engine && (
+              activeAsset.type === 'video' ? (
+                <VideoVisualizer audioEngine={engine} videoUrl={activeAsset.url} />
+              ) : (
+                <Visualizer audioEngine={engine} textureUrl={activeAsset.url} />
+              )
+            )}
           </Float>
 
           {/* Post-processing Bloom for extra glow */}

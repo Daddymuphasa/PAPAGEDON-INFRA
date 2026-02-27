@@ -20,7 +20,8 @@ const Visualizer = ({ audioEngine, textureUrl = '/textures/texture1.png' }) => {
     uTime: { value: 0 },
     uBass: { value: 0 },
     uMid: { value: 0 },
-    uHigh: { value: 0 }
+    uHigh: { value: 0 },
+    uBeat: { value: 0 }
   }), [texture]);
 
   // Update texture if it changes
@@ -33,13 +34,18 @@ const Visualizer = ({ audioEngine, textureUrl = '/textures/texture1.png' }) => {
   useFrame((state) => {
     if (!audioEngine || !meshRef.current) return;
     
-    const { bass, mid, high } = audioEngine.getEnergy();
+    const { bass, mid, high, beat } = audioEngine.getEnergy();
     
     // Update uniforms for the shader
     meshRef.current.material.uniforms.uTime.value = state.clock.getElapsedTime();
     meshRef.current.material.uniforms.uBass.value = bass;
     meshRef.current.material.uniforms.uMid.value = mid;
     meshRef.current.material.uniforms.uHigh.value = high;
+    meshRef.current.material.uniforms.uBeat.value = THREE.MathUtils.lerp(
+      meshRef.current.material.uniforms.uBeat.value, 
+      beat ? 1.0 : 0.0, 
+      0.2
+    );
 
     // Movement: Slow rotate + audio-synced jitter
     meshRef.current.rotation.x += 0.002 + high * 0.01;
