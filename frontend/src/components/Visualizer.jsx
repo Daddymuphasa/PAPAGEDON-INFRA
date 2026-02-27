@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { vertexShader, fragmentShader } from '../../../audio-engine/src/shaders';
+import { vertexShader, fragmentShader } from '../audio/shaders';
 
 /**
  * Immersive Scene reacting to Audio

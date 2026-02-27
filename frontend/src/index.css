@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+
+:root {
+  --neon-green: #00ffa3;
+  --bg-dark: #050505;
+  --glass: rgba(255, 255, 255, 0.05);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-dark);
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.experience-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px;
+}
+
+.experience-ui > * {
+  pointer-events: auto;
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 30px;
+  border-radius: 20px;
+  max-width: 400px;
+}
+
+.neon-button {
+  padding: 18px 45px;
+  background: var(--neon-green);
+  color: black;
+  border: none;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 0 20px rgba(0, 255, 163, 0.3);
+}
+
+.neon-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(0, 255, 163, 0.6);
+}
+
+.neon-button:active {
+  transform: scale(0.95);
+}
+
+.stats-panel {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.analyzing-pulse {
+  animation: pulse 2s infinite;
+  color: var(--neon-green);
+  font-weight: 700;
+}
