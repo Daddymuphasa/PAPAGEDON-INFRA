@@ -1,24 +1,37 @@
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useMemo, useEffect } from 'react';
+import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { vertexShader, fragmentShader } from '../audio/shaders';
 
 /**
- * Immersive Scene reacting to Audio
+ * Enhanced Immersive Visualizer
+ * Distorts reference images in real-time based on audio energy.
  */
-const Visualizer = ({ audioEngine }) => {
+const Visualizer = ({ audioEngine, textureUrl = '/textures/texture1.png' }) => {
   const meshRef = useRef();
   
+  // Load the reference image texture
+  const texture = useLoader(THREE.TextureLoader, textureUrl);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
   // Custom Shader Material
   const uniforms = useMemo(() => ({
+    uTexture: { value: texture },
     uTime: { value: 0 },
     uBass: { value: 0 },
     uMid: { value: 0 },
     uHigh: { value: 0 }
-  }), []);
+  }), [texture]);
+
+  // Update texture if it changes
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.material.uniforms.uTexture.value = texture;
+    }
+  }, [texture]);
 
   useFrame((state) => {
-    if (!audioEngine) return;
+    if (!audioEngine || !meshRef.current) return;
     
     const { bass, mid, high } = audioEngine.getEnergy();
     
@@ -28,23 +41,24 @@ const Visualizer = ({ audioEngine }) => {
     meshRef.current.material.uniforms.uMid.value = mid;
     meshRef.current.material.uniforms.uHigh.value = high;
 
-    // Movement
-    meshRef.current.rotation.x += 0.005;
-    meshRef.current.rotation.y += 0.005;
+    // Movement: Slow rotate + audio-synced jitter
+    meshRef.current.rotation.x += 0.002 + high * 0.01;
+    meshRef.current.rotation.y += 0.002 + mid * 0.01;
     
     // Pulse mesh scale with bass
-    const scale = 1 + bass * 0.5;
-    meshRef.current.scale.set(scale, scale, scale);
+    const scale = 1.2 + bass * 0.8;
+    meshRef.current.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
   });
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[1.5, 64, 64]} />
+      {/* Complex geometry for more interesting distortion surface */}
+      <icosahedronGeometry args={[2, 64]} />
       <shaderMaterial
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
-        wireframe={true}
+        side={THREE.DoubleSide}
       />
     </mesh>
   );

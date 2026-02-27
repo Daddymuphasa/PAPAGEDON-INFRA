@@ -1,13 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stars, Float, Text as ThreeText } from '@react-three/drei';
+import { OrbitControls, Stars, Float, Bloom, EffectComposer } from '@react-three/drei';
 import { AudioEngine } from './audio/core';
 import Visualizer from './components/Visualizer';
+
+const TEXTURES = [
+  { id: 1, name: 'NEON WAVE', url: '/textures/texture1.png' },
+  { id: 2, name: 'CYBER ORGANIC', url: '/textures/texture2.png' },
+  { id: 3, name: 'LIQUID GOLD', url: '/textures/texture3.png' }
+];
 
 function App() {
   const [engine, setEngine] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [metrics, setMetrics] = useState({ bass: 0, mid: 0, high: 0 });
+  const [activeTexture, setActiveTexture] = useState(TEXTURES[0]);
   const audioRef = useRef();
 
   const handleStart = async () => {
@@ -28,88 +35,121 @@ function App() {
     }
   };
 
-  // Loop to update metrics in the UI
   useEffect(() => {
     if (!engine || !isPlaying) return;
     const interval = setInterval(() => {
       setMetrics(engine.getEnergy());
-    }, 50);
+    }, 30);
     return () => clearInterval(interval);
   }, [engine, isPlaying]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#050505', color: 'white', overflow: 'hidden' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#000', color: 'white', overflow: 'hidden' }}>
       
-      {/* Immersive UI Overlay */}
+      {/* Premium VJ Dashboard Overlay */}
       <div className="experience-ui">
-        <header className="glass-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, letterSpacing: '4px', color: '#00ffa3' }}>PAPAGEDON</h1>
-              <p style={{ margin: '5px 0 0 0', opacity: 0.7, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Infrastructure v1.0 // Avalanche EVM
-              </p>
-            </div>
+        <header className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, letterSpacing: '6px', color: '#00ffa3' }}>PAPAGEDON</h1>
+            <p style={{ margin: '2px 0 0 0', opacity: 0.5, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+              Advanced Audio-Visual Infrastructure
+            </p>
           </div>
+          
+          {isPlaying && (
+            <div className="stats-panel" style={{ margin: 0 }}>
+              {TEXTURES.map(t => (
+                <button 
+                  key={t.id}
+                  onClick={() => setActiveTexture(t)}
+                  className={`stat-item ${activeTexture.id === t.id ? 'active' : ''}`}
+                  style={{ 
+                    background: activeTexture.id === t.id ? 'rgba(0, 255, 163, 0.2)' : 'transparent',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '5px 15px',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    color: activeTexture.id === t.id ? '#00ffa3' : 'white',
+                    fontSize: '0.6rem',
+                    fontWeight: 700
+                  }}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )}
         </header>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '30px' }}>
           {!isPlaying ? (
-            <div style={{ textAlign: 'center' }}>
-              <button className="neon-button" onClick={handleStart} style={{ marginBottom: '10px' }}>
-                START IMMERSIVE STREAM
+            <div className="glass-card" style={{ textAlign: 'center', padding: '50px' }}>
+              <h2 style={{ letterSpacing: '2px', marginBottom: '30px' }}>SYSTEM READY</h2>
+              <button className="neon-button" onClick={handleStart} style={{ marginBottom: '15px', width: '100%' }}>
+                START LIVE STREAM
               </button>
               <br />
-              <label className="neon-button" style={{ background: 'transparent', border: '1px solid #00ffa3', color: '#00ffa3', display: 'inline-block' }}>
-                LOAD AMAPIANO FILE
+              <label className="neon-button" style={{ background: 'transparent', border: '1px solid #00ffa3', color: '#00ffa3', display: 'inline-block', width: '100%', boxSizing: 'border-box' }}>
+                UPLOAD AMAPIANO
                 <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileUpload} />
               </label>
-              <p style={{ marginTop: '15px', opacity: 0.5, fontSize: '0.9rem' }}>Connect to live audio or upload track</p>
             </div>
           ) : (
-            <div className="glass-card" style={{ textAlign: 'center' }}>
-              <div className="analyzing-pulse">BIO-AUDIO SYNC ACTIVE</div>
-              <div className="stats-panel">
-                <div className="stat-item">
-                  <span className="stat-label">Bass</span>
-                  <span className="stat-value">{(metrics.bass * 100).toFixed(0)}%</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Mid</span>
-                  <span className="stat-value">{(metrics.mid * 100).toFixed(0)}%</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">High</span>
-                  <span className="stat-value">{(metrics.high * 100).toFixed(0)}%</span>
-                </div>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '300px' }}>
+              <div className="analyzing-pulse" style={{ fontSize: '0.7rem', letterSpacing: '2px', marginBottom: '15px', textAlign: 'center' }}>
+                LIVE SPECTRUM ANALYSIS
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {['bass', 'mid', 'high'].map(band => (
+                  <div key={band} style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '5px', opacity: 0.7 }}>
+                      <span>{band}</span>
+                      <span>{(metrics[band] * 100).toFixed(0)}%</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ 
+                        height: '100%', 
+                        width: `${metrics[band] * 100}%`, 
+                        background: band === 'bass' ? '#00ffa3' : band === 'mid' ? '#00e5ff' : '#ff00e5',
+                        transition: 'width 0.1s ease-out',
+                        boxShadow: `0 0 10px ${band === 'bass' ? '#00ffa3' : band === 'mid' ? '#00e5ff' : '#ff00e5'}`
+                      }} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
         <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div className="glass-card" style={{ padding: '10px 20px', fontSize: '0.7rem', opacity: 0.6 }}>
-            LATENCY: 14ms | BUFFER: 512 | MODE: REAL-TIME
+          <div className="glass-card" style={{ padding: '10px 20px', fontSize: '0.6rem', opacity: 0.5, letterSpacing: '1px' }}>
+            ENGINE: GLSL_V2 | SHADER_DISPLACEMENT: ACTIVE | TEXTURE: {activeTexture.name}
           </div>
-          <div style={{ textAlign: 'right', fontSize: '0.8rem', opacity: 0.5 }}>
-            PAPAGEDON.AVA <br />
-            BUILD GAMES HACKATHON 2026
+          <div style={{ textAlign: 'right', fontSize: '0.7rem', opacity: 0.4, letterSpacing: '2px' }}>
+             AVALANCHE C-CHAIN <br /> INFRA_CORE_RUNNING
           </div>
         </footer>
       </div>
 
-      {/* 3D Visual Layer */}
-      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-        <color attach="background" args={['#050505']} />
-        <ambientLight intensity={0.4} />
-        <pointLight position={[10, 10, 10]} intensity={1} color="#00ffa3" />
+      {/* 3D Visual Rendering Layer */}
+      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+        <color attach="background" args={['#000']} />
         
-        <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
-        
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-          {engine && <Visualizer audioEngine={engine} />}
-        </Float>
-        
+        <Suspense fallback={null}>
+          <Stars radius={100} depth={50} count={10000} factor={4} saturation={0} fade speed={2} />
+          
+          <Float speed={3} rotationIntensity={1} floatIntensity={1}>
+            {engine && <Visualizer audioEngine={engine} textureUrl={activeTexture.url} />}
+          </Float>
+
+          {/* Post-processing Bloom for extra glow */}
+          <EffectComposer>
+            <Bloom intensity={1.5} luminanceThreshold={0.1} luminanceSmoothing={0.9} />
+          </EffectComposer>
+        </Suspense>
+
         <OrbitControls enableZoom={false} makeDefault />
       </Canvas>
 
